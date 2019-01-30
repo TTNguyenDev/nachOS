@@ -125,7 +125,7 @@ void ExceptionHandler(ExceptionType which) {
 	case SyscallException: 
 		switch (type) {
 		case SC_Halt:
-			printf("Shut Down");
+			printf("Shut Down \n");
 			interrupt->Halt();
 			return;
 
@@ -137,27 +137,27 @@ void ExceptionHandler(ExceptionType which) {
 			filename = User2System(virAddr, MAXFILELENGHTH + 1);
 
 			if (strlen(filename) == 0) {
-				printf("File name is not valid");
+				printf("File name is not valid \n");
 				machine -> WriteRegister(2, -1);
 				delete[] filename;
 				break;
 			}
 
 			if (!filename) {
-				printf("Not enough memory in system");
+				printf("Not enough memory in system \n");
 				machine -> WriteRegister(2, -1);
 				delete[] filename;
 				break;	
 			}
 
 			if (!fileSystem->Create(filename, 0)) {
-				printf("Error create file");
+				printf("Error create file \n");
 				machine -> WriteRegister(2, -1);
 				delete[] filename;
 				break;		
 			}
 			
-			printf("Create file Success");
+			printf("Create file Success \n");
 			machine -> WriteRegister(2, 0);
 			delete[] filename;
 			break;

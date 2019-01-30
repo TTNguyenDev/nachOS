@@ -150,7 +150,7 @@ void ExceptionHandler(ExceptionType which) {
 				break;	
 			}
 
-			if (!fileSystem->Create(filename)) {
+			if (!fileSystem->Create(filename, 0)) {
 				printf("Error create file");
 				machine -> WriteRegister(2, -1);
 				delete[] filename;
