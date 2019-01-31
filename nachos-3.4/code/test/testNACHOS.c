@@ -2,6 +2,6 @@
 #define MAX_LENGHTH 32
 
 int main() {
-	Create("helloCreateFile.txt");
+	Open("helloCreateFile.txt", 1);
 	return 0;
 }

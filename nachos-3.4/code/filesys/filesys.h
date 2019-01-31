@@ -58,24 +58,17 @@ class FileSystem {
 	
 	this->Create("stdin", 0);
 	this->Create("stdout", 0);
-
-	OpenFile* temp = this->Open("stdin", 0); //index = 1
-	openf[0] = temp;
-	openf[0]->type = 1;
-	temp = this->Open("stdout", 0);
-	openf[1] = temp;
-	openf[1]->type = 0;
-	index = 1;
-	delete temp;
+	openf[index++] = this->Open("stdin", 2);
+	openf[index++] = this->Open("stdout", 3);
 
 	}
 
     ~FileSystem() {
 	for (int i = 0; i < 10; i++) {
 		if (openf[i] != NULL)
-			 delete open[i];	
-		}
-	delete openf;
+			 delete openf[i];	
+	}
+	delete[] openf;
 	}
 
     bool Create(char *name, int initialSize) { 
@@ -118,11 +111,13 @@ class FileSystem {
     					// If "format", there is nothing on
 					// the disk, so initialize the directory
     					// and the bitmap of free blocks.
+    
 
     bool Create(char *name, int initialSize);  	
 					// Create a file (UNIX creat)
 
     OpenFile* Open(char *name); 	// Open a file (UNIX open)
+    OpenFile* Open(char *name, int type); 
 
     bool Remove(char *name);  		// Delete a file (UNIX unlink)
 

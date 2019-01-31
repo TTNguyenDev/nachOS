@@ -28,6 +28,10 @@
 					// See definitions listed under #else
 class OpenFile {
   public:
+    
+    //var type
+    int type;
+
     OpenFile(int f) { file = f; currentOffset = 0; }	// open the file
     ~OpenFile() { Close(file); }			// close the file
 
@@ -63,6 +67,14 @@ class FileHeader;
 
 class OpenFile {
   public:
+   
+   //Define
+   //type 0: read and write
+   //type 1: only read
+   //type 2: stdin
+   //type 3: stdout
+
+
     OpenFile(int sector);		// Open a file whose header is located
 					// at "sector" on the disk
     ~OpenFile();			// Close the file

@@ -32,7 +32,8 @@ class OpenFile {
     //var type
     int type;
 
-    OpenFile(int f) { file = f; currentOffset = 0; }	// open the file
+    OpenFile(int f) { file = f; currentOffset = 0; type = 0; } 	// open the file
+    OpenFile(int f, int t) { file = f; currentOffset = 0; type = t; }
     ~OpenFile() { Close(file); }			// close the file
 
     int ReadAt(char *into, int numBytes, int position) { 

@@ -129,7 +129,7 @@ void ExceptionHandler(ExceptionType which) {
 			interrupt->Halt();
 			return;
 
-		case SC_Create:	
+		case SC_Create:	{
 			int virAddr;
 			char* filename;
 
@@ -162,8 +162,33 @@ void ExceptionHandler(ExceptionType which) {
 			delete[] filename;
 			break;
 		}
+		
+		case SC_Open: {
+			int virtAddr = machine->ReadRegister(4);
+			int typeOfOpen = machine->ReadRegister(5);
+			char* filename;
+		
+			filename = User2System(virtAddr, MAXFILELENGHTH);
 
-		InscreasePC();
-		break;
+			if (fileSystem->index <= 9 && fileSystem->index >= 0) {
+				if (typeOfOpen == 0 || typeOfOpen == 1) {
+					if ((fileSystem->openf[fileSystem->index] = fileSystem->Open(filename, typeOfOpen)) != NULL) {
+						machine->WriteRegister(2, fileSystem->index - 1);			
+					}
+				} else if (typeOfOpen == 2) { //stdin
+					machine->WriteRegister(2, 0); 
+				} else {
+					machine->WriteRegister(2, 1);
+				}
+				delete[] filename;
+				break;		
+			}
+			machine->WriteRegister(2, -1);
+			delete[]filename;
+			break;
+		}
+	}
+	InscreasePC();
+	break;
     }
 }
