@@ -173,11 +173,14 @@ void ExceptionHandler(ExceptionType which) {
 			if (fileSystem->index <= 9 && fileSystem->index >= 0) {
 				if (typeOfOpen == 0 || typeOfOpen == 1) {
 					if ((fileSystem->openf[fileSystem->index] = fileSystem->Open(filename, typeOfOpen)) != NULL) {
+						printf("type 0 1\n");
 						machine->WriteRegister(2, fileSystem->index - 1);			
 					}
 				} else if (typeOfOpen == 2) { //stdin
+					printf("stdin\n");
 					machine->WriteRegister(2, 0); 
 				} else {
+					printf("else case\n");
 					machine->WriteRegister(2, 1);
 				}
 				delete[] filename;
@@ -185,6 +188,21 @@ void ExceptionHandler(ExceptionType which) {
 			}
 			machine->WriteRegister(2, -1);
 			delete[]filename;
+			break;
+		}
+		case SC_Close: {
+			int fileID = machine->ReadRegister(4);
+
+			if (fileID >= 0 && fileID <= 9) {
+				if (fileSystem->openf[fileID]) {
+					printf("file existed, close file success\n");
+					fileSystem->openf[fileID];
+					machine->WriteRegister(2, 0);
+					break;
+				}
+
+			}
+			machine->WriteRegister(2, -1);
 			break;
 		}
 	}
