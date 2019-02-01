@@ -57,6 +57,8 @@ class OpenFile {
 		}
 
     int Length() { Lseek(file, 0, 2); return Tell(file); }
+
+    int GetCurrentPos() { currentOffset = Tell(file); return currentOffset; }
     
   private:
     int file;
@@ -74,6 +76,8 @@ class OpenFile {
    //type 1: only read
    //type 2: stdin
    //type 3: stdout
+
+    int type;
 
 
     OpenFile(int sector);		// Open a file whose header is located
@@ -98,6 +102,9 @@ class OpenFile {
 					// file (this interface is simpler 
 					// than the UNIX idiom -- lseek to 
 					// end of file, tell, lseek back 
+
+    int GetCurrentPos() { return seekPosition; }
+
     
   private:
     FileHeader *hdr;			// Header for this file 

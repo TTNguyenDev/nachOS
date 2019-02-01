@@ -51,7 +51,7 @@
 //	are in machine.h.
 //----------------------------------------------------------------------
 
-void InscreasePC() {
+void IncreasePC() {
 	machine->registers[PrevPCReg] = machine->registers[PCReg];
 	machine->registers[PCReg] = machine->registers[NextPCReg];
 	machine->registers[NextPCReg] += 4;
@@ -75,6 +75,24 @@ char* User2System(int virAddr, int limit) {
 		 break;
 	}
 	return kernelBuf;
+}
+
+int System2User(int virtAddr, int length, char* buf) {
+	if (length < 0) 
+		return -1;
+	if (length == 0) 
+		return length;
+
+	int i = 0;
+	int oneChar = 0;
+	
+	do {
+		oneChar = (int)buf[i];
+		machine->WriteMem(virtAddr + i, 1, oneChar);
+		i++;	
+	} while (i < length && oneChar != 0);
+	
+	return i;
 }
 
 
@@ -196,7 +214,8 @@ void ExceptionHandler(ExceptionType which) {
 			if (fileID >= 0 && fileID <= 9) {
 				if (fileSystem->openf[fileID]) {
 					printf("file existed, close file success\n");
-					fileSystem->openf[fileID];
+					delete fileSystem->openf[fileID];
+					fileSystem->openf[fileID] = NULL;
 					machine->WriteRegister(2, 0);
 					break;
 				}
@@ -205,8 +224,68 @@ void ExceptionHandler(ExceptionType which) {
 			machine->WriteRegister(2, -1);
 			break;
 		}
+
+		case SC_Read: {
+			int virtAddr = machine->ReadRegister(4);
+			int charcount = machine->ReadRegister(5);
+			int id = machine->ReadRegister(6);
+			int OldPos, NewPos;
+			char* buf;
+			
+			//check id range, only handle when id in range 0...10
+			if (id < 0 || id > 10) {
+				printf("Out of id range \n");
+				machine->WriteRegister(2, -1);
+				IncreasePC();
+				return;
+			}
+
+			//check file == NULL ?
+			if (fileSystem->openf[id] == NULL) {
+				printf("File doesn't exist \n");
+				machine->WriteRegister(2, -1);
+				IncreasePC();
+				return;
+			}
+			
+
+			//type stdout -> Can't read
+			if (fileSystem->openf[id]->type == 3) {
+				printf("Type stdout, can't read this file \n");
+				machine->WriteRegister(2, -1);
+				IncreasePC();
+				return;
+			}
+
+			//-------------Readable file -------------
+
+			OldPos = fileSystem->openf[id]->GetCurrentPos();
+			buf = User2System(virtAddr, charcount);
+
+			//type stdin
+			if (fileSystem->openf[id]->type == 2) {
+				int size = gSynchConsole->Read(buf, charcount); //byte actually read
+				System2User(virtAddr, size, buf); //copy string from SysSpace to USpace
+				machine->WriteRegister(2, size);
+				delete buf;
+				IncreasePC();
+				return;
+			}
+
+			//normal type (type > 3) 
+			if (fileSystem->openf[id]->Read(buf, charcount) > 0) {
+				NewPos = fileSystem->openf[id]->GetCurrentPos();
+				System2User(virtAddr, NewPos - OldPos, buf);
+				machine->WriteRegister(2, NewPos - OldPos);
+			}  else {
+				machine->WriteRegister(2, -2);
+			}
+			delete buf;
+			IncreasePC();
+			return;
+		}
 	}
-	InscreasePC();
+	IncreasePC();
 	break;
     }
 }
