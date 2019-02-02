@@ -182,7 +182,54 @@ void ExceptionHandler(ExceptionType which) {
 		}
 		
 		case SC_Open: {
-			int virtAddr = machine->ReadRegister(4);
+
+			int bufAddr = machine->ReadRegister(4); 
+			int mType = machine->ReadRegister(5);
+			char *buf;
+
+			// if already opened 10 files
+			if (fileSystem->index > 10)
+			{
+				machine->WriteRegister(2, -1);
+				delete[] buf;
+				break;
+			}
+				
+			// if open stdin or stdout, number of openfiles dont increase
+			buf = User2System(bufAddr, MAXFILELENGTH + 1);
+			if (strcmp(buf, "stdin") == 0)
+			{
+				printf("Stdin mode\n");
+				machine->WriteRegister(2, 0);
+				delete[] buf;
+				break;
+			}
+			if (strcmp(buf, "stdout") == 0)
+			{
+				printf("Stdout mode\n");
+				machine->WriteRegister(2, 1);
+				delete[] buf;
+				break;
+			}
+
+			// if opening file succeed
+			// should not use OpenFile* temp to store = fileSystem->openfile[fileSystem->index]
+			// cause, i dont have a method to destroy this pointer correctly
+			if ((fileSystem->openf[fileSystem->index] = fileSystem->Open(buf, mType)) != NULL)
+			{
+
+				printf("\nOpen file success '%s'\n", buf);
+				machine->WriteRegister(2, fileSystem->index - 1);
+			}
+			else 
+			{
+				printf("Can not open file '%s'", buf);
+				machine->WriteRegister(2, -1);
+			}
+			delete[] buf;
+			break;
+
+			/*int virtAddr = machine->ReadRegister(4);
 			int typeOfOpen = machine->ReadRegister(5);
 			char* filename;
 		
@@ -205,7 +252,7 @@ void ExceptionHandler(ExceptionType which) {
 			}
 			machine->WriteRegister(2, -1);
 			delete[]filename;
-			break;
+			break; */
 		}
 		case SC_Close: {
 			int fileID = machine->ReadRegister(4);
