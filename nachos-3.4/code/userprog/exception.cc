@@ -26,7 +26,7 @@
 #include "syscall.h"
 
 //Define area
-#define MAXFILELENGHTH 255
+#define MAXFILELENGTH 255
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -152,7 +152,7 @@ void ExceptionHandler(ExceptionType which) {
 			char* filename;
 
 			virAddr = machine -> ReadRegister(4);
-			filename = User2System(virAddr, MAXFILELENGHTH + 1);
+			filename = User2System(virAddr, MAXFILELENGTH + 1);
 
 			if (strlen(filename) == 0) {
 				printf("File name is not valid \n");
@@ -186,7 +186,7 @@ void ExceptionHandler(ExceptionType which) {
 			int typeOfOpen = machine->ReadRegister(5);
 			char* filename;
 		
-			filename = User2System(virtAddr, MAXFILELENGHTH);
+			filename = User2System(virtAddr, MAXFILELENGTH);
 
 			if (fileSystem->index <= 9 && fileSystem->index >= 0) {
 				if (typeOfOpen == 0 || typeOfOpen == 1) {
@@ -195,7 +195,6 @@ void ExceptionHandler(ExceptionType which) {
 						machine->WriteRegister(2, fileSystem->index - 1);			
 					}
 				} else if (typeOfOpen == 2) { //stdin
-					printf("stdin\n");
 					machine->WriteRegister(2, 0); 
 				} else {
 					printf("else case\n");
@@ -284,6 +283,126 @@ void ExceptionHandler(ExceptionType which) {
 			IncreasePC();
 			return;
 		}
+
+		case SC_Write: {
+			int virtAddr = machine->ReadRegister(4);
+			int charcount = machine->ReadRegister(5);
+			int id = machine->ReadRegister(6);
+			int OldPos, NewPos;
+			char *buf;
+
+			//check id range, only handle when id in range 0...10
+			if (id < 0 || id > 10) {
+				printf("Out of id range \n");
+				machine->WriteRegister(2, -1);
+				IncreasePC();
+				return;
+			}
+
+			//check file == NULL ?
+			if (fileSystem->openf[id] == NULL) {
+				printf("File doesn't exist \n");
+				machine->WriteRegister(2, -1);
+				IncreasePC();
+				return;
+			}
+
+			//handle type == 1 -> OnlyRead, type == 2 Stdin
+			if (fileSystem->openf[id]->type == 1 || fileSystem->openf[id]->type == 2) {
+				printf("Can't Write because type of this file is only-read or stdin \n");
+				machine->WriteRegister(2, -1);
+				IncreasePC();
+				return;
+			}
+
+			//----------------Type can write area-----------------
+
+			OldPos = fileSystem->openf[id]->GetCurrentPos();
+			buf = User2System(virtAddr, charcount);
+
+
+			//type write-read
+			if (fileSystem->openf[id]->type == 0) {
+				if (fileSystem->openf[id]->Write(buf, charcount) > 0) {
+					NewPos = fileSystem->openf[id]->GetCurrentPos();
+					machine->WriteRegister(2, NewPos - OldPos);
+					delete buf;
+					IncreasePC();
+					return;
+				}
+			}
+			
+
+			//type stdout 
+			if (fileSystem->openf[id]->type == 3) {
+				int i = 0;
+				while(buf[i] != 0 && buf[i] != '\n') {
+					gSynchConsole->Write(buf + i, 1);
+					i++;
+				}
+
+				buf[i] = '\n';
+				gSynchConsole->Write(buf + i, 1);
+				machine->WriteRegister(2, i - 1);
+				delete buf;
+				IncreasePC();
+				return;
+
+			}
+		}
+
+	case SC_Print: {
+		int virtAddr;
+		char* buffer;
+		virtAddr = machine->ReadRegister(4);
+		buffer = User2System(virtAddr, MAXFILELENGTH);
+		int length = 0;
+		while (buffer[length] != 0) length++;
+		gSynchConsole->Write(buffer, length + 1);
+		delete buffer;
+		break;
+	}
+	
+	case SC_Seek: {
+			int pos = machine->ReadRegister(4);
+			int id = machine->ReadRegister(5);
+
+			//check id range, only handle when id in range 0...10
+			if (id < 0 || id > 10) {
+				printf("Out of id range \n");
+				machine->WriteRegister(2, -1);
+				IncreasePC();
+				return;
+			}
+
+			//check file is exist
+			if (fileSystem->openf[id] == NULL) {
+				printf("File doesn't exist \n");
+				machine->WriteRegister(2, -1);
+				IncreasePC();
+				return;	
+			}
+
+			//Check console type 
+			if (id == 0 || id == 1) {
+				printf("Can't use seek func on console \n");
+				machine->WriteRegister(2, -1);
+				IncreasePC();
+				return;
+			}
+
+			//---------------Seek------------------
+			pos = (pos == -1) ? fileSystem->openf[id]->Length() : pos;
+			if (pos > fileSystem->openf[id]-> Length() || pos < 0) {
+				printf("Can't seek file to this position, out of position index \n");
+				machine->WriteRegister(2, -1);
+			} else {
+				fileSystem->openf[id]->Seek(pos);
+				machine->WriteRegister(2, pos);
+			}
+			IncreasePC();
+			return;
+		} 
 	}
 	IncreasePC();
 	break;

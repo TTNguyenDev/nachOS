@@ -1,4 +1,5 @@
 #include "syscall.h"
+#include "copyright.h"
 
 #define MAX_LENGTH 255
 
@@ -15,11 +16,12 @@ int main() {
 		if (length <= 1) 
 			Print("file name must be more than 1 character \n");
 		else {
-			if (Create(filename) == 0) {
-				Print("Create file success\n");		
-			}		
+			Create(filename);
+			Print("Create file success\n");				
 		}	
 		Close(stdin);
 	}
 	return 0;
+	
+
 }
