@@ -51,6 +51,10 @@
 //	are in machine.h.
 //----------------------------------------------------------------------
 
+// IncreasePC help OS increase program counter,
+// previousValue = currentValue
+// currentValue = nextValue
+// nextValue += 4 
 void IncreasePC() {
 	machine->registers[PrevPCReg] = machine->registers[PCReg];
 	machine->registers[PCReg] = machine->registers[NextPCReg];
@@ -96,7 +100,7 @@ int System2User(int virtAddr, int length, char* buf) {
 }
 
 
-
+//Handle All Exeption Type
 void ExceptionHandler(ExceptionType which) {
     int type = machine->ReadRegister(2);
 
@@ -142,16 +146,20 @@ void ExceptionHandler(ExceptionType which) {
 
 	case SyscallException: 
 		switch (type) {
+
+		//default syscall of nachOS
 		case SC_Halt:
 			printf("Shut Down \n");
 			interrupt->Halt();
 			return;
-
+		
+		//void Create(char *name);
+		//this func copy string name from userSpace to SystemSpace using "char* User2System(int virAddr, int limit)" func. return 0 if success else return -1
 		case SC_Create:	{
 			int virAddr;
 			char* filename;
 
-			virAddr = machine -> ReadRegister(4);
+			virAddr = machine->ReadRegister(4);
 			filename = User2System(virAddr, MAXFILELENGTH + 1);
 
 			if (strlen(filename) == 0) {
@@ -181,96 +189,71 @@ void ExceptionHandler(ExceptionType which) {
 			break;
 		}
 		
+		//OpenFileId Open(char *name, int type);
+		//return OpenFileId(int value) if success else return -1
 		case SC_Open: {
-
 			int bufAddr = machine->ReadRegister(4); 
 			int mType = machine->ReadRegister(5);
-			char *buf;
+			char *filename;
 
-			// if already opened 10 files
-			if (fileSystem->index > 10)
-			{
+			// if out of range from 0...10 return -1 
+			if (fileSystem->index > 10 || fileSystem->index < 0) {
 				machine->WriteRegister(2, -1);
-				delete[] buf;
+				delete[] filename;
 				break;
 			}
 				
-			// if open stdin or stdout, number of openfiles dont increase
-			buf = User2System(bufAddr, MAXFILELENGTH + 1);
-			if (strcmp(buf, "stdin") == 0)
-			{
+			//stdin, stdout mode
+			filename = User2System(bufAddr, MAXFILELENGTH + 1);
+			if (strcmp(filename, "stdin") == 0) {
 				printf("Stdin mode\n");
 				machine->WriteRegister(2, 0);
-				delete[] buf;
+				delete[] filename;
 				break;
 			}
-			if (strcmp(buf, "stdout") == 0)
-			{
+			if (strcmp(filename, "stdout") == 0) {
 				printf("Stdout mode\n");
 				machine->WriteRegister(2, 1);
-				delete[] buf;
+				delete[] filename;
 				break;
 			}
 
-			// if opening file succeed
-			// should not use OpenFile* temp to store = fileSystem->openfile[fileSystem->index]
-			// cause, i dont have a method to destroy this pointer correctly
-			if ((fileSystem->openf[fileSystem->index] = fileSystem->Open(buf, mType)) != NULL)
-			{
+			//open file success
+			if ((fileSystem->openf[fileSystem->index] = fileSystem->Open(filename, mType)) != NULL) {
 
-				printf("\nOpen file success '%s'\n", buf);
+				printf("\nOpen file success '%s' \n", filename);
 				machine->WriteRegister(2, fileSystem->index - 1);
-			}
-			else 
-			{
-				printf("Can not open file '%s'", buf);
+			} else {
+				printf("Can not open file '%s' \n", filename);
 				machine->WriteRegister(2, -1);
 			}
-			delete[] buf;
-			break;
 
-			/*int virtAddr = machine->ReadRegister(4);
-			int typeOfOpen = machine->ReadRegister(5);
-			char* filename;
-		
-			filename = User2System(virtAddr, MAXFILELENGTH);
-
-			if (fileSystem->index <= 9 && fileSystem->index >= 0) {
-				if (typeOfOpen == 0 || typeOfOpen == 1) {
-					if ((fileSystem->openf[fileSystem->index] = fileSystem->Open(filename, typeOfOpen)) != NULL) {
-						printf("type 0 1\n");
-						machine->WriteRegister(2, fileSystem->index - 1);			
-					}
-				} else if (typeOfOpen == 2) { //stdin
-					machine->WriteRegister(2, 0); 
-				} else {
-					printf("else case\n");
-					machine->WriteRegister(2, 1);
-				}
-				delete[] filename;
-				break;		
-			}
-			machine->WriteRegister(2, -1);
-			delete[]filename;
-			break; */
+			delete[] filename;
+			break; 
 		}
+
+		//void Close(OpenFileId id);
+		//close file with fileId. If file's already open.
 		case SC_Close: {
 			int fileID = machine->ReadRegister(4);
 
 			if (fileID >= 0 && fileID <= 9) {
 				if (fileSystem->openf[fileID]) {
-					printf("file existed, close file success\n");
+					printf("Close file success\n");
 					delete fileSystem->openf[fileID];
 					fileSystem->openf[fileID] = NULL;
 					machine->WriteRegister(2, 0);
 					break;
-				}
-
-			}
+				} else 
+					printf("File was not opened\n");			
+			} else 
+				printf("File is not existed \n");
+			
 			machine->WriteRegister(2, -1);
 			break;
 		}
 
+		//int Read(char *buffer, int size, OpenFileId id);
 		case SC_Read: {
 			int virtAddr = machine->ReadRegister(4);
 			int charcount = machine->ReadRegister(5);
@@ -331,6 +314,7 @@ void ExceptionHandler(ExceptionType which) {
 			return;
 		}
 
+		//void Write(char *buffer, int size, OpenFileId id);
 		case SC_Write: {
 			int virtAddr = machine->ReadRegister(4);
 			int charcount = machine->ReadRegister(5);
@@ -397,7 +381,9 @@ void ExceptionHandler(ExceptionType which) {
 
 			}
 		}
-
+	
+	//void Print(char buf[]);	
+	//print string from console
 	case SC_Print: {
 		int virtAddr = machine->ReadRegister(4);
 		int i = 0;
@@ -411,19 +397,28 @@ void ExceptionHandler(ExceptionType which) {
 		gSynchConsole->Write(buf + i, 1);
 		delete[] buf;
 		break;
-
-		/*
-		int virtAddr;
-		char* buffer;
-		virtAddr = machine->ReadRegister(4);
-		buffer = User2System(virtAddr, MAXFILELENGTH);
-		int length = 0;
-		while (buffer[length] != 0) length++;
-		gSynchConsole->Write(buffer, length + 1);
-		delete buffer;
-		break; */
 	}
-	
+
+	//void Scan(char* buffer, int length);
+	//scan from console
+	case SC_Scan: {
+			char *buf = new char[MAXFILELENGTH];
+			if (buf == 0) {
+				delete[] buf;
+				break;			
+			}
+			
+			int virtAddr = machine->ReadRegister(4);
+			int length = machine->ReadRegister(5);
+
+			int fileSize = gSynchConsole->Read(buf, length);
+			System2User(virtAddr, fileSize, buf);
+			delete[] buf;
+			break;
+		} 
+
+	//int Seek(int pos, OpenFileId id);
+	//Move pointer to "pos", if pos = -1, move the pointer to end of file, return pos if success else return -1	
 	case SC_Seek: {
 			int pos = machine->ReadRegister(4);
 			int id = machine->ReadRegister(5);
@@ -463,21 +458,6 @@ void ExceptionHandler(ExceptionType which) {
 			}
 			IncreasePC();
 			return;
-		} 
-		case SC_Scan: {
-			char *buf = new char[MAXFILELENGTH];
-			if (buf == 0) {
-				delete[] buf;
-				break;			
-			}
-			
-			int virtAddr = machine->ReadRegister(4);
-			int length = machine->ReadRegister(5);
-
-			int fileSize = gSynchConsole->Read(buf, length);
-			System2User(virtAddr, fileSize, buf);
-			delete[] buf;
-			break;
 		} 
 	}
 	IncreasePC();

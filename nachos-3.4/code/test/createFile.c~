@@ -4,24 +4,23 @@
 #define MAX_LENGTH 255
 
 int main() {
-	int stdin;
+	//Create file with name input from console
+	int mFileId;
 	char filename[MAX_LENGTH];
-	Print("---------TEST: TAO FILE-----------\n");
+	Print("---------TEST: CREATE FILE-----------\n");
 	Print("Enter filename: ");
 
-	stdin = Open("stdin", 2);
-	if (stdin != -1) {
-		int length = Read(filename, MAX_LENGTH, stdin);
+	mFileId = Open("stdin", 2);
+	if (mFileId != -1) {
+		int length = Read(filename, MAX_LENGTH, mFileId);
 
 		if (length <= 1) 
-			Print("file name must be more than 1 character \n");
+			Print("File name must be more than 1 character \n");
 		else {
 			Create(filename);
 			Print("Create file success\n");				
 		}	
-		Close(stdin);
+		Close(mFileId);
 	}
 	return 0;
-	
-
 }

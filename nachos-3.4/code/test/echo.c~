@@ -6,7 +6,7 @@ int main() {
 	char buffer[MAX_LENGTH];
 	int length;
 	
-	Print("-----------TEST: ECHO---------------");
+	Print("-----------TEST: ECHO---------------\n");
 	Print(" - Enter what you want to print to console: ");
 	
 	stdin = Open("stdin", 2);
