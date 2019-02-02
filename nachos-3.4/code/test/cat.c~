@@ -27,6 +27,6 @@ int main() {
 		i++;	
 	}
 	
-	Close(fileId);
+	CloseFile(fileId);
 	return 0;
 }

@@ -31,6 +31,7 @@
 #define SC_Yield	10
 #define SC_Print        11
 #define SC_Seek         12
+#define SC_Scan         13
 
 #ifndef IN_ASM
 
@@ -110,8 +111,6 @@ int Read(char *buffer, int size, OpenFileId id);
 /* Close the file, we're done reading and writing to it. */
 void Close(OpenFileId id);
 
-
-
 /* User-level thread operations: Fork and Yield.  To allow multiple
  * threads to run within a user program. 
  */
@@ -128,6 +127,7 @@ void Yield();
 	
 int Seek(int pos, OpenFileId id);
 void Print(char buf[]);	
+void Scan(char* buffer, int length);
 
 #endif /* IN_ASM */
 

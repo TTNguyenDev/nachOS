@@ -138,7 +138,6 @@ Seek:
 	j	$31
 	.end Seek
 
-	
 	.globl Print
 	.ent Print
 Print: 

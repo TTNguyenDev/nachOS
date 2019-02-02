@@ -352,6 +352,20 @@ void ExceptionHandler(ExceptionType which) {
 		}
 
 	case SC_Print: {
+		int virtAddr = machine->ReadRegister(4);
+		int i = 0;
+		char *buf = new char[MAXFILELENGTH];
+		buf = User2System(virtAddr, MAXFILELENGTH + 1);
+		while (buf[i] != 0 && buf[i] != '\n') {
+			gSynchConsole->Write(buf + i, 1);
+			i++;
+		}
+
+		gSynchConsole->Write(buf + i, 1);
+		delete[] buf;
+		break;
+
+		/*
 		int virtAddr;
 		char* buffer;
 		virtAddr = machine->ReadRegister(4);
@@ -360,7 +374,7 @@ void ExceptionHandler(ExceptionType which) {
 		while (buffer[length] != 0) length++;
 		gSynchConsole->Write(buffer, length + 1);
 		delete buffer;
-		break;
+		break; */
 	}
 	
 	case SC_Seek: {
@@ -402,6 +416,21 @@ void ExceptionHandler(ExceptionType which) {
 			}
 			IncreasePC();
 			return;
+		} 
+		case SC_Scan: {
+			char *buf = new char[MAXFILELENGTH];
+			if (buf == 0) {
+				delete[] buf;
+				break;			
+			}
+			
+			int virtAddr = machine->ReadRegister(4);
+			int length = machine->ReadRegister(5);
+
+			int fileSize = gSynchConsole->Read(buf, length);
+			System2User(virtAddr, fileSize, buf);
+			delete[] buf;
+			break;
 		} 
 	}
 	IncreasePC();

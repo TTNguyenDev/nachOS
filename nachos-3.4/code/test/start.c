@@ -146,6 +146,15 @@ Print:
 	j	$31
 	.end Print
 
+	.globl Scan
+	.ent Scan
+Scan: 
+	addiu $2,$0,SC_Scan 
+	syscall
+	j	$31
+	.end Scan
+
+
 /* dummy function to keep gcc happy */
         .globl  __main
         .ent    __main
