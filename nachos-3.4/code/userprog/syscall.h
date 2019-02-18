@@ -37,6 +37,8 @@
 //Syscall for print and scan from console
 #define SC_Print        11
 #define SC_Scan         13
+#define SC_ReadInt      14
+#define SC_PrintInt     15
 
 #ifndef IN_ASM
 
@@ -139,6 +141,12 @@ void Print(char buf[]);
 
 //SC_Scan: Scan from console
 void Scan(char* buffer, int length);
+
+//SC_ReadInt: 
+int ReadInt();
+
+//SC_PrintInt
+void PrintInt(int number);
 
 #endif /* IN_ASM */
 

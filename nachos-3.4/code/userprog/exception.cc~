@@ -384,82 +384,167 @@ void ExceptionHandler(ExceptionType which) {
 	
 	//void Print(char buf[]);	
 	//print string from console
-	case SC_Print: {
-		int virtAddr = machine->ReadRegister(4);
-		int i = 0;
-		char *buf = new char[MAXFILELENGTH];
-		buf = User2System(virtAddr, MAXFILELENGTH + 1);
-		while (buf[i] != 0 && buf[i] != '\n') {
-			gSynchConsole->Write(buf + i, 1);
-			i++;
-		}
+        case SC_Print: {
+            int virtAddr = machine->ReadRegister(4);
+            int i = 0;
+            char *buf = new char[MAXFILELENGTH];
+            buf = User2System(virtAddr, MAXFILELENGTH + 1);
+            while (buf[i] != 0 && buf[i] != '\n') {
+                gSynchConsole->Write(buf + i, 1);
+                i++;
+            }
 
-		gSynchConsole->Write(buf + i, 1);
-		delete[] buf;
-		break;
-	}
+            gSynchConsole->Write(buf + i, 1);
+            delete[] buf;
+            break;
+        }
 
 	//void Scan(char* buffer, int length);
 	//scan from console
-	case SC_Scan: {
-			char *buf = new char[MAXFILELENGTH];
-			if (buf == 0) {
-				delete[] buf;
-				break;			
-			}
-			
-			int virtAddr = machine->ReadRegister(4);
-			int length = machine->ReadRegister(5);
+        case SC_Scan: {
+                char *buf = new char[MAXFILELENGTH];
+                if (buf == 0) {
+                    delete[] buf;
+                    break;			
+                }
+                
+                int virtAddr = machine->ReadRegister(4);
+                int length = machine->ReadRegister(5);
 
-			int fileSize = gSynchConsole->Read(buf, length);
-			System2User(virtAddr, fileSize, buf);
-			delete[] buf;
-			break;
-		} 
+                int fileSize = gSynchConsole->Read(buf, length);
+                System2User(virtAddr, fileSize, buf);
+                delete[] buf;
+                break;
+        } 
 
 	//int Seek(int pos, OpenFileId id);
 	//Move pointer to "pos", if pos = -1, move the pointer to end of file, return pos if success else return -1	
-	case SC_Seek: {
-			int pos = machine->ReadRegister(4);
-			int id = machine->ReadRegister(5);
+        case SC_Seek: {
+                int pos = machine->ReadRegister(4);
+                int id = machine->ReadRegister(5);
 
-			//check id range, only handle when id in range 0...10
-			if (id < 0 || id > 10) {
-				printf("Out of id range \n");
-				machine->WriteRegister(2, -1);
-				IncreasePC();
-				return;
-			}
+                //check id range, only handle when id in range 0...10
+                if (id < 0 || id > 10) {
+                    printf("Out of id range \n");
+                    machine->WriteRegister(2, -1);
+                    IncreasePC();
+                    return;
+                }
 
-			//check file is exist
-			if (fileSystem->openf[id] == NULL) {
-				printf("File doesn't exist \n");
-				machine->WriteRegister(2, -1);
-				IncreasePC();
-				return;	
-			}
+                //check file is exist
+                if (fileSystem->openf[id] == NULL) {
+                    printf("File doesn't exist \n");
+                    machine->WriteRegister(2, -1);
+                    IncreasePC();
+                    return;	
+                }
 
-			//Check console type 
-			if (id == 0 || id == 1) {
-				printf("Can't use seek func on console \n");
-				machine->WriteRegister(2, -1);
-				IncreasePC();
-				return;
-			}
+                //Check console type 
+                if (id == 0 || id == 1) {
+                    printf("Can't use seek func on console \n");
+                    machine->WriteRegister(2, -1);
+                    IncreasePC();
+                    return;
+                }
 
-			//---------------Seek------------------
-			pos = (pos == -1) ? fileSystem->openf[id]->Length() : pos;
-			if (pos > fileSystem->openf[id]-> Length() || pos < 0) {
-				printf("Can't seek file to this position, out of position index \n");
-				machine->WriteRegister(2, -1);
-			} else {
-				fileSystem->openf[id]->Seek(pos);
-				machine->WriteRegister(2, pos);
-			}
-			IncreasePC();
-			return;
-		} 
-	}
+                //---------------Seek------------------
+                pos = (pos == -1) ? fileSystem->openf[id]->Length() : pos;
+                if (pos > fileSystem->openf[id]-> Length() || pos < 0) {
+                    printf("Can't seek file to this position, out of position index \n");
+                    machine->WriteRegister(2, -1);
+                } else {
+                    fileSystem->openf[id]->Seek(pos);
+                    machine->WriteRegister(2, pos);
+                }
+                IncreasePC();
+                return;
+            } 
+        }
+
+        case SC_ReadInt: {
+        char *buff = new char [MAXFILELENGTH + 1];
+        int numbytes = gSynchConsole->Read(buff, MAXFILELENGTH);
+        int number = 0;
+
+        //check isNegative
+        bool isNegative = false;
+        int firstChar = 0;
+
+        if(buff[0] == '-') {
+            isNegative = true;
+            firstChar = 1;
+        }
+
+
+        //wrong input
+        for (int i = firstChar; i < numbytes; i++) {
+            if (buff[i] == '.' || (buff[i] < '0' && buff[i] > '9')) {
+                printf("\n The integer number is not valid");
+                machine->WriteRegister(2, 0);
+                IncreasePC();
+                delete buff;
+                return;
+            }
+        }
+
+        //input value is an integer
+        for (int i = firstChar; i < numbytes; i++) {
+            number = number * 10 + (int)(buff[i] - 48);
+        }
+
+        if (isNegative) {
+            number *= -1;
+        }
+
+        machine->WriteRegister(2, number);
+        IncreasePC();
+        delete buff;
+        return;
+        }
+        
+     //void PrintInt(int number)
+    //Print out an integer on screen
+    case SC_PrintInt: {
+        int number = machine->ReadRegister(4);
+
+        bool isNegative = false;
+        int length = 0;
+        int firstChar = 0;
+
+        if (number < 0) {
+            isNegative = true;
+            number *= -1;
+            firstChar = 1;
+        }
+
+        int temp = number;
+
+        while(temp) {
+            length++;
+            temp /= 10;
+        }
+
+        char *buff = new char[MAXFILELENGTH + 1];
+        for (int i = firstChar + length - 1; i >= firstChar; i--) {
+            buff[i] = (char)((number % 10) + 48);
+            number /= 10;
+        }
+
+        if (isNegative) {
+            buff[0] = '-';
+            buff[length + 1] = 0;
+            gSynchConsole->Write(buff, length + 1);
+            delete buff;
+            IncreasePC();
+            return;
+        }
+
+        buff[length] = 0;
+        gSynchConsole->Write(buff, length);
+        delete buff;
+        IncreasePC();
+        return;
+  	}
 	IncreasePC();
 	break;
     }

@@ -153,6 +153,23 @@ Scan:
 	syscall
 	j	$31
 	.end Scan
+	
+	.globl ReadInt
+	.ent ReadInt
+ReadInt: 
+	addiu $2,$0,SC_ReadInt 
+	syscall
+	j	$31
+	.end ReadInt
+	
+	.globl PrintInt
+	.ent PrintInt
+PrintInt: 
+	addiu $2,$0,SC_PrintInt
+	syscall
+	j	$31
+	.end PrintInt
+
 
 /* dummy function to keep gcc happy */
         .globl  __main
