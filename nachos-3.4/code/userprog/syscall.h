@@ -35,10 +35,13 @@
 #define SC_Yield	10
 
 //Syscall for print and scan from console
-#define SC_Print        11
-#define SC_Scan         13
+#define SC_PrintString  11
+#define SC_ReadString   13
 #define SC_ReadInt      14
 #define SC_PrintInt     15
+#define SC_ReadChar     16
+#define SC_PrintChar    17
+
 
 #ifndef IN_ASM
 
@@ -136,17 +139,17 @@ void Yield();
 //SC_Seek: move pointer to "pos", if pos = -1, move the pointer to end of file, return pos if success else return -1
 int Seek(int pos, OpenFileId id);
 
-//SC_Print: Print to console
-void Print(char buf[]);	
+//String
+void PrintStrring(char buf[]);	
+void ReadString(char* buffer, int length);
 
-//SC_Scan: Scan from console
-void Scan(char* buffer, int length);
-
-//SC_ReadInt: 
+//Int 
 int ReadInt();
-
-//SC_PrintInt
 void PrintInt(int number);
+
+//Char
+char ReadChar();
+void PrintChar(char character);
 
 #endif /* IN_ASM */
 
