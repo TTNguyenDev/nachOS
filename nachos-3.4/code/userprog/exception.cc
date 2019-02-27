@@ -385,36 +385,31 @@ void ExceptionHandler(ExceptionType which) {
                     //void Print(char buf[]);
                     //print string from console
                 case SC_PrintString: {
-                    int virtAddr = machine->ReadRegister(4);
-                    int i = 0;
-                    char *buf = new char[MAXFILELENGTH];
-                    buf = User2System(virtAddr, MAXFILELENGTH + 1);
-                    while (buf[i] != 0 && buf[i] != '\n') {
-                        gSynchConsole->Write(buf + i, 1);
-                        i++;
-                    }
-                    
-                    gSynchConsole->Write(buf + i, 1);
-                    delete[] buf;
-                    break;
+               		int virtAddr;
+			char* buffer;
+			virtAddr = machine->ReadRegister(4); 
+			buffer = User2System(virtAddr, 255); 
+			int length = 0;
+			while (buffer[length] != 0) length++; 
+			gSynchConsole->Write(buffer, length + 1);
+			delete buffer; 
+			IncreasePC(); 
+			return;
                 }
                     
                     //void Scan(char* buffer, int length);
                     //scan from console
                 case SC_ReadString: {
-                    char *buf = new char[MAXFILELENGTH];
-                    if (buf == 0) {
-                        delete[] buf;
-                        break;
-                    }
-                    
-                    int virtAddr = machine->ReadRegister(4);
-                    int length = machine->ReadRegister(5);
-                    
-                    int fileSize = gSynchConsole->Read(buf, length);
-                    System2User(virtAddr, fileSize, buf);
-                    delete[] buf;
-                    break;
+                    int virtAddr, length;
+			char* buffer;
+			virtAddr = machine->ReadRegister(4);
+			length = machine->ReadRegister(5); 
+			buffer = User2System(virtAddr, length); 
+			gSynchConsole->Read(buffer, length);
+			System2User(virtAddr, length, buffer); 
+			delete buffer; 
+			IncreasePC();  
+			return;
                 }
                     
                     //int Seek(int pos, OpenFileId id);
@@ -514,7 +509,8 @@ void ExceptionHandler(ExceptionType which) {
                         isNegative = true;
                         number *= -1;
                         firstChar = 1;
-                    }
+                    } else if (number == 0) 
+                    	length = 1;
                     
                     int temp = number;
                     
@@ -522,6 +518,7 @@ void ExceptionHandler(ExceptionType which) {
                         length++;
                         temp /= 10;
                     }
+                    
                     
                     char *buff = new char[MAXFILELENGTH + 1];
                     for (int i = firstChar + length - 1; i >= firstChar; i--) {
@@ -537,7 +534,7 @@ void ExceptionHandler(ExceptionType which) {
                         IncreasePC();
                         return;
                     }
-                    
+                   
                     buff[length] = 0;
                     gSynchConsole->Write(buff, length);
                     delete buff;

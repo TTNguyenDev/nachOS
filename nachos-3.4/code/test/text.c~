@@ -7,5 +7,6 @@ int main() {
 	PrintString("Enter what you want to print to console: ");
 	ReadString(result, 255);
 	PrintString(result);
+	//PrintString("\n");
 	return 0;
 }
