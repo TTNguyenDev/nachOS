@@ -153,182 +153,24 @@ void ExceptionHandler(ExceptionType which) {
                     interrupt->Halt();
                     return;
                     
-                    //void Create(char *name);
-                    //this func copy string name from userSpace to SystemSpace using "char* User2System(int virAddr, int limit)" func. return 0 if success else return -1
-                case SC_Create:    {
-                    int virAddr;
-                    char* filename;
-                    
-                    virAddr = machine->ReadRegister(4);
-                    filename = User2System(virAddr, MAXFILELENGTH + 1);
-                    
-                    if (strlen(filename) == 0) {
-                        printf("File name is not valid \n");
-                        machine -> WriteRegister(2, -1);
-                        delete[] filename;
-                        break;
-                    }
-                    
-                    if (!filename) {
-                        printf("Not enough memory in system \n");
-                        machine -> WriteRegister(2, -1);
-                        delete[] filename;
-                        break;
-                    }
-                    
-                    if (!fileSystem->Create(filename, 0)) {
-                        printf("Error create file \n");
-                        machine -> WriteRegister(2, -1);
-                        delete[] filename;
-                        break;
-                    }
-                    
-                    printf("Create file Success \n");
-                    machine -> WriteRegister(2, 0);
-                    delete[] filename;
-                    break;
-                }
-                    
-                    //int Read(char *buffer, int size, OpenFileId id);
-                case SC_Read: {
-                    int virtAddr = machine->ReadRegister(4);
-                    int charcount = machine->ReadRegister(5);
-                    int id = machine->ReadRegister(6);
-                    int OldPos, NewPos;
-                    char* buf;
-                    
-                    //check id range, only handle when id in range 0...10
-                    if (id < 0 || id > 10) {
-                        printf("Out of id range \n");
-                        machine->WriteRegister(2, -1);
-                        IncreasePC();
-                        return;
-                    }
-                    
-                    //check file == NULL ?
-                    if (fileSystem->openf[id] == NULL) {
-                        printf("File doesn't exist \n");
-                        machine->WriteRegister(2, -1);
-                        IncreasePC();
-                        return;
-                    }
-                    
-                    
-                    //type stdout -> Can't read
-                    if (fileSystem->openf[id]->type == 3) {
-                        printf("Type stdout, can't read this file \n");
-                        machine->WriteRegister(2, -1);
-                        IncreasePC();
-                        return;
-                    }
-                    
-                    //-------------Readable file -------------
-                    
-                    OldPos = fileSystem->openf[id]->GetCurrentPos();
-                    buf = User2System(virtAddr, charcount);
-                    
-                    //type stdin
-                    if (fileSystem->openf[id]->type == 2) {
-                        int size = gSynchConsole->Read(buf, charcount); //byte actually read
-                        System2User(virtAddr, size, buf); //copy string from SysSpace to USpace
-                        machine->WriteRegister(2, size);
-                        delete buf;
-                        IncreasePC();
-                        return;
-                    }
-                    
-                    //normal type (type > 3)
-                    if (fileSystem->openf[id]->Read(buf, charcount) > 0) {
-                        NewPos = fileSystem->openf[id]->GetCurrentPos();
-                        System2User(virtAddr, NewPos - OldPos, buf);
-                        machine->WriteRegister(2, NewPos - OldPos);
-                    }  else {
-                        machine->WriteRegister(2, -2);
-                    }
-                    delete buf;
-                    IncreasePC();
-                    return;
-                }
-                    
-                    //void Write(char *buffer, int size, OpenFileId id);
-                case SC_Write: {
-                    int virtAddr = machine->ReadRegister(4);
-                    int charcount = machine->ReadRegister(5);
-                    int id = machine->ReadRegister(6);
-                    int OldPos, NewPos;
-                    char *buf;
-                    
-                    //check id range, only handle when id in range 0...10
-                    if (id < 0 || id > 10) {
-                        printf("Out of id range \n");
-                        machine->WriteRegister(2, -1);
-                        IncreasePC();
-                        return;
-                    }
-                    
-                    //check file == NULL ?
-                    if (fileSystem->openf[id] == NULL) {
-                        printf("File doesn't exist \n");
-                        machine->WriteRegister(2, -1);
-                        IncreasePC();
-                        return;
-                    }
-                    
-                    //handle type == 1 -> OnlyRead, type == 2 Stdin
-                    if (fileSystem->openf[id]->type == 1 || fileSystem->openf[id]->type == 2) {
-                        printf("Can't Write because type of this file is only-read or stdin \n");
-                        machine->WriteRegister(2, -1);
-                        IncreasePC();
-                        return;
-                    }
-                    
-                    //----------------Type can write area-----------------
-                    
-                    OldPos = fileSystem->openf[id]->GetCurrentPos();
-                    buf = User2System(virtAddr, charcount);
-                    
-                    
-                    //type write-read
-                    if (fileSystem->openf[id]->type == 0) {
-                        if (fileSystem->openf[id]->Write(buf, charcount) > 0) {
-                            NewPos = fileSystem->openf[id]->GetCurrentPos();
-                            machine->WriteRegister(2, NewPos - OldPos);
-                            delete buf;
-                            IncreasePC();
-                            return;
-                        }
-                    }
-                    
-                    
-                    //type stdout
-                    if (fileSystem->openf[id]->type == 3) {
-                        int i = 0;
-                        while(buf[i] != 0 && buf[i] != '\n') {
-                            gSynchConsole->Write(buf + i, 1);
-                            i++;
-                        }
-                        
-                        buf[i] = '\n';
-                        gSynchConsole->Write(buf + i, 1);
-                        machine->WriteRegister(2, i - 1);
-                        delete buf;
-                        IncreasePC();
-                        return;
-                        
-                    }
-                }
-                    
                     //void Print(char buf[]);
                     //print string from console
                 case SC_PrintString: {
-                    int virtAddr;
-                    char* buffer;
-                    virtAddr = machine->ReadRegister(4);
-                    buffer = User2System(virtAddr, 255);
-                    int length = 0;
-                    while (buffer[length] != 0) length++;
-                    gSynchConsole->Write(buffer, length + 1);
-                    delete buffer;
+                    int address; //containt address of buffer on register 4
+                    address = machine->ReadRegister(4);
+                   
+                    char* buff; //containt string
+                    buff = User2System(address, 255); //copy string from UserSpace to SystemSpace
+                    
+		    int length = 0; //length of string                  
+                    while (buff[length]) 
+                    	length++;
+                    	
+                    //use  method write in class SynchConsole to print string to console
+                    gSynchConsole->Write(buff, length + 1);
+                    
+                    //Delete Pointer
+                    delete buff;
                     IncreasePC();
                     return;
                 }
@@ -336,21 +178,30 @@ void ExceptionHandler(ExceptionType which) {
                     //void Scan(char* buffer, int length);
                     //scan from console
                 case SC_ReadString: {
-                    int virtAddr, length;
-                    char* buffer;
-                    virtAddr = machine->ReadRegister(4);
-                    length = machine->ReadRegister(5);
-                    buffer = User2System(virtAddr, length);
-                    gSynchConsole->Read(buffer, length);
-                    System2User(virtAddr, length, buffer);
-                    delete buffer;
+                    //containt address of buffer on register 4
+                    int address;
+                    address = machine->ReadRegister(4);
+                    
+                    //Get string length by reading register 5
+                    int lengthOfString = 0;
+                    lengthOfString = machine->ReadRegister(5);
+                    
+                    char* buff;
+                    buff = User2System(address, lengthOfString); //copy string from UserSpace to SystemSpace
+                    //use  method read in class SynchConsole to read string to console
+                    gSynchConsole->Read(buff, lengthOfString); 
+                    
+                    //copy string from systemSpace to userSpace to print to console
+                    System2User(address, lengthOfString, buff);
+                    
+                    delete buff;
                     IncreasePC();
                     return;
                 }
                     
                 case SC_ReadInt: {
                     char *buff = new char [MAXFILELENGTH + 1];
-                    int numbytes = gSynchConsole->Read(buff, MAXFILELENGTH);
+                    int numberSize = gSynchConsole->Read(buff, MAXFILELENGTH);
                     int number = 0;
                     
                     //check isNegative
@@ -363,7 +214,7 @@ void ExceptionHandler(ExceptionType which) {
                     }
                     
                     //wrong input
-                    for (int i = firstChar; i < numbytes; i++) {
+                    for (int i = firstChar; i < numberSize; i++) {
                         if (buff[i] == '.' || (buff[i] < '0' && buff[i] > '9')) {
                             printf("\n The integer number is not valid");
                             machine->WriteRegister(2, 0);
@@ -374,7 +225,7 @@ void ExceptionHandler(ExceptionType which) {
                     }
                     
                     //input value is an integer
-                    for (int i = firstChar; i < numbytes; i++) {
+                    for (int i = firstChar; i < numberSize; i++) {
                         number = number * 10 + (int)(buff[i] - 48);
                     }
                     
@@ -431,6 +282,34 @@ void ExceptionHandler(ExceptionType which) {
                     delete buff;
                     IncreasePC();
                     return;
+                }
+                    
+                // char ReadChar() 
+                // Print out an integer on screen
+                case SC_ReadChar: {
+                    char* buff = new char[MAXFILELENGTH];
+                    int numberOfCharacter = gSynchConsole->Read(buff, MAXFILELENGTH);
+                    
+                    if(numberOfCharacter > 1) {
+                        printf("Only char is allow!");
+                        machine->WriteRegister(2, 0);
+                    } else if(numberOfCharacter == 0) {
+                        printf("Null isn't allow");
+                        machine->WriteRegister(2, 0);
+                    } else {
+                        char c = buff[0];
+                        machine->WriteRegister(2, c);
+                    }
+                    delete buff;
+                    break;
+                }
+
+                //void PrintChar(char character) 
+                //Print out an integer on screen         
+                case SC_PrintChar: {
+                    char c = (char)machine->ReadRegister(4);
+                    gSynchConsole->Write(&c, 1); 
+                    break;  
                 }
             }
             IncreasePC();

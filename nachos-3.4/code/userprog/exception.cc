@@ -152,18 +152,25 @@ void ExceptionHandler(ExceptionType which) {
                     printf("Shut Down \n");
                     interrupt->Halt();
                     return;
-                  
+                    
                     //void Print(char buf[]);
                     //print string from console
                 case SC_PrintString: {
-                    int virtAddr;
-                    char* buffer;
-                    virtAddr = machine->ReadRegister(4);
-                    buffer = User2System(virtAddr, 255);
-                    int length = 0;
-                    while (buffer[length] != 0) length++;
-                    gSynchConsole->Write(buffer, length + 1);
-                    delete buffer;
+                    int address; //containt address of buffer on register 4
+                    address = machine->ReadRegister(4);
+                   
+                    char* buff; //containt string
+                    buff = User2System(address, 255); //copy string from UserSpace to SystemSpace
+                    
+		    int length = 0; //length of string                  
+                    while (buff[length]) 
+                    	length++;
+                    	
+                    //use  method write in class SynchConsole to print string to console
+                    gSynchConsole->Write(buff, length + 1);
+                    
+                    //Delete Pointer
+                    delete buff;
                     IncreasePC();
                     return;
                 }
@@ -171,21 +178,30 @@ void ExceptionHandler(ExceptionType which) {
                     //void Scan(char* buffer, int length);
                     //scan from console
                 case SC_ReadString: {
-                    int virtAddr, length;
-                    char* buffer;
-                    virtAddr = machine->ReadRegister(4);
-                    length = machine->ReadRegister(5);
-                    buffer = User2System(virtAddr, length);
-                    gSynchConsole->Read(buffer, length);
-                    System2User(virtAddr, length, buffer);
-                    delete buffer;
+                    //containt address of buffer on register 4
+                    int address;
+                    address = machine->ReadRegister(4);
+                    
+                    //Get string length by reading register 5
+                    int lengthOfString = 0;
+                    lengthOfString = machine->ReadRegister(5);
+                    
+                    char* buff;
+                    buff = User2System(address, lengthOfString); //copy string from UserSpace to SystemSpace
+                    //use  method read in class SynchConsole to read string to console
+                    gSynchConsole->Read(buff, lengthOfString); 
+                    
+                    //copy string from systemSpace to userSpace to print to console
+                    System2User(address, lengthOfString, buff);
+                    
+                    delete buff;
                     IncreasePC();
                     return;
                 }
                     
                 case SC_ReadInt: {
                     char *buff = new char [MAXFILELENGTH + 1];
-                    int numbytes = gSynchConsole->Read(buff, MAXFILELENGTH);
+                    int size = gSynchConsole->Read(buff, MAXFILELENGTH);
                     int number = 0;
                     
                     //check isNegative
@@ -198,7 +214,7 @@ void ExceptionHandler(ExceptionType which) {
                     }
                     
                     //wrong input
-                    for (int i = firstChar; i < numbytes; i++) {
+                    for (int i = firstChar; i < size; i++) {
                         if (buff[i] == '.' || (buff[i] < '0' && buff[i] > '9')) {
                             printf("\n The integer number is not valid");
                             machine->WriteRegister(2, 0);
@@ -209,7 +225,7 @@ void ExceptionHandler(ExceptionType which) {
                     }
                     
                     //input value is an integer
-                    for (int i = firstChar; i < numbytes; i++) {
+                    for (int i = firstChar; i < size; i++) {
                         number = number * 10 + (int)(buff[i] - 48);
                     }
                     
@@ -266,6 +282,34 @@ void ExceptionHandler(ExceptionType which) {
                     delete buff;
                     IncreasePC();
                     return;
+                }
+                    
+                // char ReadChar() 
+                // Print out an integer on screen
+                case SC_ReadChar: {
+                    char* buff = new char[MAXFILELENGTH];
+                    int numberOfCharacter = gSynchConsole->Read(buff, MAXFILELENGTH);
+                    
+                    if(numberOfCharacter > 1) {
+                        printf("Only char is allow!");
+                        machine->WriteRegister(2, 0);
+                    } else if(numberOfCharacter == 0) {
+                        printf("Null isn't allow");
+                        machine->WriteRegister(2, 0);
+                    } else {
+                        char c = buff[0];
+                        machine->WriteRegister(2, c);
+                    }
+                    delete buff;
+                    break;
+                }
+
+                //void PrintChar(char character) 
+                //Print out an integer on screen         
+                case SC_PrintChar: {
+                    char c = (char)machine->ReadRegister(4);
+                    gSynchConsole->Write(&c, 1); 
+                    break;  
                 }
             }
             IncreasePC();
