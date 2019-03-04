@@ -215,8 +215,15 @@ void ExceptionHandler(ExceptionType which) {
                     
                     //wrong input
                     for (int i = firstChar; i < size; i++) {
-                        if (buff[i] == '.' || (buff[i] < '0' && buff[i] > '9')) {
-                            printf("\n The integer number is not valid");
+                    	if (buff[i] == '.') {
+                    	    printf("\n Float is not allow");
+                    	    machine->WriteRegister(2, 0);
+                            IncreasePC();
+                            delete buff;
+                            return;
+                    	   }
+                        else if (buff[i] < 48 || buff[i] > 57) {
+                            printf("\n Bad Input\n");
                             machine->WriteRegister(2, 0);
                             IncreasePC();
                             delete buff;

@@ -201,7 +201,7 @@ void ExceptionHandler(ExceptionType which) {
                     
                 case SC_ReadInt: {
                     char *buff = new char [MAXFILELENGTH + 1];
-                    int numberSize = gSynchConsole->Read(buff, MAXFILELENGTH);
+                    int size = gSynchConsole->Read(buff, MAXFILELENGTH);
                     int number = 0;
                     
                     //check isNegative
@@ -214,9 +214,16 @@ void ExceptionHandler(ExceptionType which) {
                     }
                     
                     //wrong input
-                    for (int i = firstChar; i < numberSize; i++) {
-                        if (buff[i] == '.' || (buff[i] < '0' && buff[i] > '9')) {
-                            printf("\n The integer number is not valid");
+                    for (int i = firstChar; i < size; i++) {
+                    	if (buff[i] == '.') {
+                    	    printf("\n Float is not allow");
+                    	    machine->WriteRegister(2, 0);
+                            IncreasePC();
+                            delete buff;
+                            return;
+                    	   }
+                        else if (buff[i] < 48 || buff[i] > 57) {
+                            printf("\n Bad Input\n");
                             machine->WriteRegister(2, 0);
                             IncreasePC();
                             delete buff;
@@ -225,7 +232,7 @@ void ExceptionHandler(ExceptionType which) {
                     }
                     
                     //input value is an integer
-                    for (int i = firstChar; i < numberSize; i++) {
+                    for (int i = firstChar; i < size; i++) {
                         number = number * 10 + (int)(buff[i] - 48);
                     }
                     
