@@ -10,7 +10,6 @@ int main() {
 	PrintString("\t# 	Nguyen Vuong Dat Vu  - 1753131              #\n");
 	PrintString("\t# 	Truong Tran Hai Yen  - 1753139              #\n");
 	PrintString("\t####################### HCMUS #######################\n");
-	
-	PrintInt(ReadInt());
+
 	return 0;
 }

@@ -163,8 +163,7 @@ void ExceptionHandler(ExceptionType which) {
                     buff = User2System(address, 255); //copy string from UserSpace to SystemSpace
                     
 		    int length = 0; //length of string                  
-                    while (buff[length]) 
-                    	length++;
+                    while (buff[length]) length++;
                     	
                     //use  method write in class SynchConsole to print string to console
                     gSynchConsole->Write(buff, length + 1);
@@ -206,23 +205,19 @@ void ExceptionHandler(ExceptionType which) {
                     
                     //check isNegative
                     bool isNegative = false;
-                    int firstChar = 0;
                     
-                    if(buff[0] == '-') {
+                    if(buff[0] == '-') 
                         isNegative = true;
-                        firstChar = 1;
-                    }
                     
                     //wrong input
-                    for (int i = firstChar; i < size; i++) {
+                    for (int i = isNegative ? 1 : 0; i < size; i++) {
                     	if (buff[i] == '.') {
                     	    printf("\n Float is not allow");
                     	    machine->WriteRegister(2, 0);
                             IncreasePC();
                             delete buff;
                             return;
-                    	   }
-                        else if (buff[i] < 48 || buff[i] > 57) {
+                    	} else if (buff[i] < 48 || buff[i] > 57) {
                             printf("\n Bad Input\n");
                             machine->WriteRegister(2, 0);
                             IncreasePC();
@@ -232,14 +227,11 @@ void ExceptionHandler(ExceptionType which) {
                     }
                     
                     //input value is an integer
-                    for (int i = firstChar; i < size; i++) {
+                    for (int i = isNegative ? 1 : 0; i < size; i++)
                         number = number * 10 + (int)(buff[i] - 48);
-                    }
-                    
-                    if (isNegative) {
-                        number *= -1;
-                    }
-                    
+                       
+                    number = isNegative ? number *= -1 : number;
+                      
                     machine->WriteRegister(2, number);
                     IncreasePC();
                     delete buff;
@@ -253,12 +245,10 @@ void ExceptionHandler(ExceptionType which) {
                     
                     bool isNegative = false;
                     int length = 0;
-                    int firstChar = 0;
                     
                     if (number < 0) {
                         isNegative = true;
                         number *= -1;
-                        firstChar = 1;
                     } else if (number == 0)
                         length = 1;
                     
@@ -269,8 +259,10 @@ void ExceptionHandler(ExceptionType which) {
                         temp /= 10;
                     }
                     
+                    int firstIndex = isNegative ? 1 : 0;
+                    
                     char *buff = new char[MAXFILELENGTH + 1];
-                    for (int i = firstChar + length - 1; i >= firstChar; i--) {
+                    for (int i = firstIndex + length - 1; i >= firstIndex; i--) {
                         buff[i] = (char)((number % 10) + 48);
                         number /= 10;
                     }
@@ -308,6 +300,7 @@ void ExceptionHandler(ExceptionType which) {
                         machine->WriteRegister(2, c);
                     }
                     delete buff;
+                    IncreasePC();
                     break;
                 }
 
