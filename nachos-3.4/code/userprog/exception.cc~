@@ -197,7 +197,10 @@ void ExceptionHandler(ExceptionType which) {
                     IncreasePC();
                     return;
                 }
-                    
+                 
+                 
+                 //int ReadInt();
+                 //read integer from console    
                 case SC_ReadInt: {
                     char *buff = new char [MAXFILELENGTH + 1];
                     int size = gSynchConsole->Read(buff, MAXFILELENGTH);
@@ -312,7 +315,7 @@ void ExceptionHandler(ExceptionType which) {
                     break;  
                 }
             }
-            IncreasePC();
+           // IncreasePC();
             break;
     }
 }

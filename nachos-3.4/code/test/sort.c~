@@ -9,7 +9,6 @@ int main() {
 	int tmp;
 	int i = 0;
 	int j = 0;
-	PrintInt(0);
 	PrintString("--------------------BUBBLE SORT--------------------\n");
 	PrintString("Enter number of element: \n");
 	size = ReadInt();
