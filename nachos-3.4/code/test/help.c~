@@ -1,9 +1,6 @@
 #include "syscall.h"
 
-#define MAX_LENGTH 255
-
 int main() {
-	
 	PrintString("\t####################### HELP ########################\n");
 	PrintString("\t#  Group: DAT VU                                    #\n");
 	PrintString("\t#  Member:                                          #\n");
@@ -12,8 +9,8 @@ int main() {
 	PrintString("\t# 	Truong Tran Hai Yen  - 1753139              #\n");
 	PrintString("\t####################### HCMUS #######################\n");
 	
-	PrintString("\t * Text: Progam allow the input which has maximum length is 255. \n \t The input will be change into string so that the program will print out that string to the console.\n");
-	PrintString("\t * Sort: Program let the user input an array of string. \n \t Using Bubble sort algorithm to sort that array. Finally the program will print out the result to console.\n");
+	PrintString("\t * Text: Program allow user enter a string which has maximum length is 255. \n \t The input will be loaded by ReadString syscall. \n \t After that the program will print out that string to the console with PrintString syscall.\n
+	PrintString("\t * Sort: Program let user input an array of string. Using ReadInt syscall to read the input \n \t and use Bubble sort algorithm to sort that array. \n \t Finally the program will print out the sorted array to console with PrintInt syscall.\n");
 	
 	return 0;
 }
