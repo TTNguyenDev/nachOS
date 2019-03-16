@@ -289,10 +289,6 @@ void ExceptionHandler(ExceptionType which) {
                 // char ReadChar() 
                 // Print out an integer on screen
                 case SC_ReadChar: {
-                
-               
-		
-                
                     char* buff = new char[MAXFILELENGTH];
                     int numberOfCharacter = gSynchConsole->Read(buff, MAXFILELENGTH);
                     
@@ -307,10 +303,7 @@ void ExceptionHandler(ExceptionType which) {
                         machine->WriteRegister(2, c);
                     }
                     delete buff;
-                    
                     break;
-                    
-                    
                 }
 
                 //void PrintChar(char character) 
