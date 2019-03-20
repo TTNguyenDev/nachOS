@@ -317,7 +317,6 @@ void ExceptionHandler(ExceptionType which) {
                     
                     int virtAddr = machine->ReadRegister(4);
                     int charcount = machine->ReadRegister(5);
-                    char *buf;
                     
                     int OldPos = fileSystem->openf[id]->GetCurrentPos();
                     char *buf = User2System(virtAddr, charcount);
