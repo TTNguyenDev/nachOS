@@ -241,7 +241,7 @@ void ExceptionHandler(ExceptionType which) {
                 }
                     
                     //int Read(char *buffer, int size, OpenFileId id);
-                case SC_Read: { //y chang
+                case SC_Read: {
                     int id = machine->ReadRegister(6);
                     
                     //Handle all error when reading file

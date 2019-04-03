@@ -449,7 +449,7 @@ void ExceptionHandler(ExceptionType which) {
                     //wrong input
                     for (int i = isNegative ? 1 : 0; i < size; i++) {
                         if (buff[i] == '.') {
-                            printf("\n Float is not allow");
+                            printf("\n Float is not allow \n");
                             machine->WriteRegister(2, 0);
                             IncreasePC();
                             delete buff;

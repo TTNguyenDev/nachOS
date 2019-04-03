@@ -35,7 +35,7 @@ CPP = gcc -E
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt shell matmult sort help text createFile copy echo cat
+all: halt shell matmult sort help text createFile copy echo cat append reverse
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.c > strt.s
@@ -100,4 +100,16 @@ text.o: text.c
 text: text.o start.o
 	$(LD) $(LDFLAGS) start.o text.o -o text.coff
 	../bin/coff2noff text.coff text
+		
+append.o: append.c
+	$(CC) $(CFLAGS) -c append.c
+append: append.o start.o
+	$(LD) $(LDFLAGS) start.o append.o -o append.coff
+	../bin/coff2noff append.coff append
+	
+reverse.o: reverse.c
+	$(CC) $(CFLAGS) -c reverse.c
+reverse: reverse.o start.o
+	$(LD) $(LDFLAGS) start.o reverse.o -o reverse.coff
+	../bin/coff2noff reverse.coff reverse
 
